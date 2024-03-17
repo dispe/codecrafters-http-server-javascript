@@ -63,6 +63,7 @@ const server = net.createServer((socket) => {
     const request = parseRequest(data);
     console.log("[", getTimestamp(), "] - Request object:", request);
 
+    // TBD: Split into functions
     if (request.resource === "") {
       socket.write("HTTP/1.1 200 OK\r\n\r\n");
     } else if (request.resource === "echo") {
@@ -71,6 +72,19 @@ const server = net.createServer((socket) => {
       response_headers += "\r\n" + "Content-Length: " + request.resource_data.length;
       console.log("[", getTimestamp(), "] - Response headers:", response_headers);
       socket.write(response_first_line + "\r\n" + response_headers + "\r\n\r\n" + request.resource_data);
+    } else if (request.resource === "user-agent") {
+      const response_first_line = "HTTP/1.1 200 OK";
+      let response_headers = "Content-Type: text/plain";
+
+      const user_agent = request.http_headers.filter(header => header.name === 'User-Agent')[0].value;
+      const response_body = user_agent;
+      
+      response_headers += "\r\n" + "Content-Length: " + response_body.length;
+
+      console.log("[", getTimestamp(), "] - Response headers:", response_headers);
+      console.log("[", getTimestamp(), "] - Response body:", response_body);
+
+      socket.write(response_first_line + "\r\n" + response_headers + "\r\n\r\n" + response_body);
     } else {
       socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
     }
