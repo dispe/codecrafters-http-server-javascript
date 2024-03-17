@@ -91,7 +91,7 @@ const server = net.createServer((socket) => {
       console.log("[", getTimestamp(), "] - Response body:", response_body);
 
       socket.write(response_first_line + "\r\n" + response_headers + "\r\n\r\n" + response_body);
-    } else if (request.resource === "files") {
+    } else if (request.http_method === 'GET' && request.resource === "files") {
 
       // get directory from the first argument of bash npm server command
       const directory = process.argv[3];
@@ -116,6 +116,29 @@ const server = net.createServer((socket) => {
       console.log("[", getTimestamp(), "] - Response body:", response_body);
 
       socket.write(response_first_line + "\r\n" + response_headers + "\r\n\r\n" + response_body);
+    } else if (request.http_method === 'POST' && request.resource === "files") {
+
+      // get directory from the first argument of bash npm server command
+      const directory = process.argv[3];
+      const file_path = directory + "/" + request.resource_data;
+      console.log("[", getTimestamp(), "] - File path: ", file_path);
+      
+      // check if the directory exists
+      if (!fs.existsSync(directory)) {
+        return404(socket);
+        return;
+      }
+
+      // write the file
+      fs.writeFileSync(file_path, request.body);
+
+      const response_first_line = "HTTP/1.1 201 OK";
+      let response_headers = "";
+      const response_body = "";
+
+      socket.write(response_first_line + "\r\n" + response_headers + "\r\n\r\n" + response_body);
+
+      socket.end();
     } else {
       return404(socket);
     }
