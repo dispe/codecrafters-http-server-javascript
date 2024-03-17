@@ -31,7 +31,7 @@ const parseRequest = (data) => {
   const [absolute_path, query_string] = request_target.split("?");
   const resource = absolute_path.split("/")[1];
   // treat the rest of the path as the resource data
-  const resource_data = absolute_path.split(resource)[1].slice(1);
+  const resource_data = absolute_path.substring(1 + resource.length + 1);
 
   return { 
     http_method: http_method, 
@@ -69,6 +69,7 @@ const server = net.createServer((socket) => {
       const response_first_line = "HTTP/1.1 200 OK";
       let response_headers = "Content-Type: text/plain";
       response_headers += "\r\n" + "Content-Length: " + request.resource_data.length;
+      console.log("[", getTimestamp(), "] - Response headers:", response_headers);
       socket.write(response_first_line + "\r\n" + response_headers + "\r\n\r\n" + request.resource_data);
     } else {
       socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
