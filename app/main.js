@@ -50,7 +50,7 @@ const server = net.createServer((socket) => {
   // Closing the server when the client disconnects
   socket.on("close", () => {
     socket.end();
-    server.close();
+    // server.close();
   });
 
   // Sending a message to the client
