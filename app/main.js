@@ -1,4 +1,5 @@
 const net = require("net");
+const fs = require('fs');
 
 // Utility function to get the timestamp
 const getTimestamp = () => {
@@ -46,6 +47,11 @@ const parseRequest = (data) => {
   };
 }
 
+const return404 = (socket) => {
+  socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+  socket.end();
+}
+
 const server = net.createServer((socket) => {
   // Closing the server when the client disconnects
   socket.on("close", () => {
@@ -85,8 +91,33 @@ const server = net.createServer((socket) => {
       console.log("[", getTimestamp(), "] - Response body:", response_body);
 
       socket.write(response_first_line + "\r\n" + response_headers + "\r\n\r\n" + response_body);
+    } else if (request.resource === "files") {
+
+      // get directory from the first argument of bash npm server command
+      const directory = process.argv[3];
+      const file_path = directory + "/" + request.resource_data;
+      console.log("[", getTimestamp(), "] - File path: ", file_path);
+      
+      // check if the file exists
+      if (!fs.existsSync(file_path)) {
+        return404(socket);
+        return;
+      }
+
+      const response_first_line = "HTTP/1.1 200 OK";
+      let response_headers = "Content-Type: application/octet-stream";
+
+      const user_agent = request.http_headers.filter(header => header.name === 'User-Agent')[0].value;
+      const response_body = fs.readFileSync(file_path);
+      
+      response_headers += "\r\n" + "Content-Length: " + response_body.length;
+
+      console.log("[", getTimestamp(), "] - Response headers:", response_headers);
+      console.log("[", getTimestamp(), "] - Response body:", response_body);
+
+      socket.write(response_first_line + "\r\n" + response_headers + "\r\n\r\n" + response_body);
     } else {
-      socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+      return404(socket);
     }
 
   });
